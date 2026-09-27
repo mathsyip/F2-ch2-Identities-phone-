@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中二數學 Ch2 恆等式與因式分解 - 課堂單元訓練平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: 'PingFang HK', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
+        .math-font { font-family: 'Cambria Math', 'Times New Roman', serif; font-style: italic; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .katex-mock { 
+            font-family: 'Cambria Math', 'Times New Roman', serif; 
+            font-style: italic; 
+            color: #38bdf8; 
+            font-size: 1.3em; 
+            font-weight: 800; 
+            letter-spacing: 0.05em;
+            margin: 0 4px;
+            display: inline-block;
+        }
+        @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
+        .animate-pulse-subtle { animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        @keyframes fade-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+        
+        /* 自定義 Slider 樣式 */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+            width: 100%;
+            margin: 10px 0;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%; background: #f59e0b; cursor: pointer; margin-top: -12px; box-shadow: 0 3px 8px rgba(0,0,0,0.5); border: 3px solid white; position: relative; z-index: 100;
+        }
+        input[type=range]::-webkit-slider-thumb:active { transform: scale(1.1); background: #fbbf24; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 10px; cursor: pointer; background: #334155; border-radius: 5px; border: 1px solid #1e293b; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        const T = (lang, zh, en) => lang === 'zh' ? zh : en;
+
+        // Custom SVG Icons
+        const IconCheck = () => <svg className="w-6 h-6 text-emerald-500 inline-block flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>;
+        const IconCross = () => <svg className="w-6 h-6 text-rose-500 inline-block flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>;
+        const IconRefresh = () => <svg className="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
+        const IconLightbulb = () => <svg className="w-5 h-5 text-amber-500 inline-block mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14H8a4 4 0 01-3.496-5.961C5.163 6.828 6.5 5.5 8.25 5.5h3.5c1.75 0 3.087 1.328 3.746 2.539A4 4 0 0112 14z" /></svg>;
+        const IconMenu = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>;
+
+        const getLessonSyllabus = (lang) => [
+            { id: "LO", title: T(lang, "LO 重溫多項式加減乘除", "L0 Revision: Polynomial Operations"), category: T(lang, "恆等式基礎", "Identity Basics"), desc: T(lang, "鞏固同類項合併、同底數相乘及多項式展開基本功。", "Consolidate basics of combining like terms and polynomial expansion.") },
+            { id: "L1", title: T(lang, "L1 2.1 證明恆等式", "L1 2.1 Proving Identities"), category: T(lang, "恆等式基礎", "Identity Basics"), desc: T(lang, "學習比較左方與右方證明恆等式。先抄原式，再作展開。", "Learn to prove identities by comparing L.H.S. and R.H.S.") },
+            { id: "L2_L3", title: T(lang, "L2-L3 2.1 恆等式求未知常數 A, B", "L2-L3 2.1 Finding Unknowns A, B in Identities"), category: T(lang, "恆等式基礎", "Identity Basics"), desc: T(lang, "逐步展開左方，透過比較同類項係數（避開聯立方程）求未知常數 A 及 B。", "Expand L.H.S. step by step, finding unknowns A and B by comparing like terms.") },
+            { id: "L4", title: T(lang, "L4 2.2 a² - b² 平方差展開", "L4 2.2 a² - b² Difference of Two Squares"), category: T(lang, "展開公式", "Expansion Formulas"), desc: T(lang, "掌握平方差展開法，強調必須先寫出 ( )² - ( )² 中間步驟。", "Master difference of two squares expansion, emphasizing the ( )² - ( )² step.") },
+            { id: "L5", title: T(lang, "L5 2.2 (a±b)² 完全平方展開", "L5 2.2 (a±b)² Perfect Square Expansion"), category: T(lang, "展開公式", "Expansion Formulas"), desc: T(lang, "運用完全平方公式展開，必須先列出 a² ± 2ab + b² 中間步驟。", "Use perfect square formula for expansion, listing the a² ± 2ab + b² step first.") },
+            { id: "L6_L1", title: T(lang, "Ch2.3 L1 因式分解 - 抽公因數/項", "Ch2.3 L1 Factorization - Common Factor"), category: T(lang, "因式分解", "Factorization"), desc: T(lang, "利用短除法視覺化尋找數值與字母的最大公因式 (HCF) 並進行提取。", "Use short division to visually find and extract the HCF of numbers and variables.") },
+            { id: "L2_BRACKET", title: T(lang, "Ch2.3 L2 因式分解 - 抽公因括號", "Ch2.3 L2 Factorization - Common Bracket"), category: T(lang, "因式分解", "Factorization"), desc: T(lang, "識別多項式中的共同括號項，如 (x + y)，並將其整體提取。", "Identify common bracket terms like (x + y) and extract them.") },
+            { id: "L3_GROUPING", title: T(lang, "Ch2.3 L3 因式分解 - 併項法 (4項)", "Ch2.3 L3 Factorization - Grouping (4 terms)"), category: T(lang, "因式分解", "Factorization"), desc: T(lang, "把四項式分為兩兩一組，分別抽公因式後再抽共同括號。", "Group 4 terms into pairs, extract common factors then common brackets.") },
+            { id: "L4_REVIEW", title: T(lang, "Ch2.3 L4 綜合重溫 - 短除法抽項", "Ch2.3 L4 Review - Short Division"), category: T(lang, "因式分解", "Factorization"), desc: T(lang, "利用短除法視覺化提取多項式的最大公因數與公因式 (HCF)。", "Use short division to visually extract HCF from polynomials.") },
+            { id: "L5_DIFF_SQ", title: T(lang, "Ch2.3 L5 因式分解 - 平方差 a² - b²", "Ch2.3 L5 Factorization - a² - b²"), category: T(lang, "因式分解", "Factorization"), desc: T(lang, "將多項式寫成 ( )² - ( )² 後分解為 (a + b)(a - b)。", "Rewrite polynomials as ( )² - ( )² and factorize to (a + b)(a - b).") },
+            { id: "L6_PERF_SQ", title: T(lang, "Ch2.3 L6 因式分解 - 完全平方 (3式)", "Ch2.3 L6 Factorization - Perfect Square (3 terms)"), category: T(lang, "因式分解", "Factorization"), desc: T(lang, "識別三項式是否符合 a² ± 2ab + b² 型態並化為 (a ± b)²。", "Check if trinomial fits a² ± 2ab + b² structure and factorize to (a ± b)².") },
+            { id: "L7_MIXED3", title: T(lang, "Ch2.3 L7 因式分解 - 溫習三式", "Ch2.3 L7 Factorization - Mixed 3 types"), category: T(lang, "綜合進階", "Adv. Comprehensive"), desc: T(lang, "靈活運用抽公因式、平方差及完全平方進行徹底分解。", "Flexibly apply HCF, difference of squares, and perfect squares for complete factorization.") },
+            { id: "L8_STRUCT", title: T(lang, "Ch2.3 L8 因式分解大集合 - (a)(b)連貫題", "Ch2.3 L8 Factorization - (a)(b) Structural"), category: T(lang, "綜合進階", "Adv. Comprehensive"), desc: T(lang, "解答公開試常見 (a) 先分解基礎式，(b) 善用 (a) 結果解複雜式。", "Solve common exam structural questions: (a) base factorization, (b) apply (a) to complex term.") },
+            { id: "L9_DIFF_EX", title: T(lang, "Ch2.3 L9 區分因式分解與展開 & 級測", "Ch2.3 L9 Distinguish Expand & Factorize"), category: T(lang, "綜合進階", "Adv. Comprehensive"), desc: T(lang, "精準分辨「展開 Expand」與「因式分解 Factorize」的反向操作。", "Accurately distinguish between the reverse operations: Expand vs Factorize.") }
+        ];
+
+        const COPRIME_PAIRS = [[2,3], [2,5], [3,4], [3,5], [3,7], [3,8], [4,5], [4,7], [4,9], [5,6], [5,7], [5,8], [5,9], [7,8], [7,9], [8,9]];
+
+        const generateQuestionBank = (lang) => {
+            const LESSON_SYLLABUS = getLessonSyllabus(lang);
+            const list = [];
+            let qId = 1;
+
+            const prng = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
+            const getInt = (seed, offset, min, max) => min + Math.floor(prng(seed + offset) * (max - min + 1));
+            const getChoice = (seed, offset, arr) => arr[Math.floor(prng(seed + offset) * arr.length)];
+
+            const makeDistractors = (correct, f1, f2, f3, seedOffset) => {
+                const set = new Set([correct, f1, f2, f3]);
+                const arr = Array.from(set);
+                let counter = 1;
+                while(arr.length < 4) { arr.push(correct + ' '.repeat(counter)); counter++; }
+                return arr.sort(() => prng(seedOffset + qId) - 0.5);
+            };
+
+            const formatTerm = (coef, variable, isFirst = false) => {
+                if (coef === 0) return "";
+                const sign = coef > 0 ? (isFirst ? "" : "+ ") : (isFirst ? "-" : "- ");
+                const absCoef = Math.abs(coef);
+                const numStr = (absCoef === 1 && variable !== "") ? "" : absCoef;
+                return `${sign}${numStr}${variable}`;
+            };
+
+            LESSON_SYLLABUS.forEach((lesson, lIdx) => {
+                for (let i = 1; i <= 100; i++) {
+                    const seed = lIdx * 10000 + i * 100;
+                    let qData = {};
+                    
+                    const swap = prng(seed) > 0.5;
+                    const hintMsg = `<br/><span class="text-indigo-600 font-bold mt-2 inline-block">💡 ${T(lang, '留意：因式相乘次序並不影響結果，(A)(B) 與 (B)(A) 完全相同！', 'Note: The order of factors does not affect the result, (A)(B) and (B)(A) are identical!')}</span>`;
+
+                    if (lesson.id === "LO") {
+                        const a = getInt(seed,1, 2, 7);
+                        const b = getInt(seed,2, 1, 9);
+                        const c = getInt(seed,3, 2, 5);
+                        const d = getInt(seed,4, 1, 4);
+                        const e = getInt(seed,5, 1, 8);
+                        const step1Corr = `${a}x + ${a*b} - ${c*d}x + ${c*e}`;
+                        qData = {
+                            title: `${T(lang, '化簡多項式：', 'Simplify the polynomial: ')}<span class="katex-mock">${a}(x + ${b}) - ${c}(${d===1?'':d}x - ${e})</span>`,
+                            steps: [
+                                {
+                                    prompt: T(lang, "【步驟一】請選出展開括號後的正確中間式：", "[Step 1] Select the correct intermediate expression after expanding brackets:"),
+                                    correct: step1Corr,
+                                    options: makeDistractors(step1Corr, `${a}x + ${b} - ${c*d}x - ${e}`, `${a}x + ${a*b} - ${c*d}x - ${c*e}`, `${a}x + ${a*b} + ${c*d}x + ${c*e}`, seed),
+                                    explanation: `${T(lang, '展開括號：', 'Expanding brackets: ')}${a}×x + ${a}×${b} - ${c}×${d}x - ${c}×(-${e}) = ${step1Corr}${T(lang, '。注意負號乘負號得正號！', '. Note: negative times negative gives positive!')}`
+                                },
+                                {
+                                    prompt: T(lang, "【步驟二】合併同類項，得出最終簡化答案：", "[Step 2] Combine like terms to get the final simplified answer:"),
+                                    correct: `${formatTerm(a - c*d, 'x', true)} ${formatTerm(a*b + c*e, '', false)}`.trim(),
+                                    options: makeDistractors(`${formatTerm(a - c*d, 'x', true)} ${formatTerm(a*b + c*e, '', false)}`.trim(), `${formatTerm(a + c*d, 'x', true)} ${formatTerm(a*b - c*e, '', false)}`.trim(), `${formatTerm(a - c*d, 'x', true)} ${formatTerm(a*b - c*e, '', false)}`.trim(), `${formatTerm(a + c*d, 'x', true)} ${formatTerm(a*b + c*e, '', false)}`.trim(), seed+1),
+                                    explanation: `${T(lang, '合併 x 的同類項：', 'Combining like terms for x: ')}(${a} - ${c*d})x = ${a - c*d}x${T(lang, '；常數項：', '; Constant term: ')}${a*b} + ${c*e} = ${a*b + c*e}。`
+                                }
+                            ]
+                        };
+                    } else if (lesson.id === "L1") {
+                        const k = getInt(seed,1, 2, 9);
+                        const c = getInt(seed,2, 2, 8);
+                        const b = getInt(seed,3, 1, 9);
+                        const lhs = T(lang, "左方", "L.H.S.");
+                        const unexpandedLHS = `${k}(x - ${b}) + ${c}x`;
+                        const expandedLHS = `${k}x - ${k*b} + ${c}x`;
+                        const finalLHS = `${k+c}x - ${k*b}`;
+                        qData = {
+                            title: `${T(lang, '證明恆等式：判斷 ', 'Prove the identity: determine if ')}<span class="katex-mock">${unexpandedLHS} ≡ ${finalLHS}</span>`,
+                            steps: [
+                                { prompt: T(lang, "【步驟一】請先抄寫等式的左方 (L.H.S.)：", "[Step 1] First, copy down the L.H.S. of the equation:"), correct: `${lhs} = ${unexpandedLHS}`, options: makeDistractors(`${lhs} = ${unexpandedLHS}`, `${lhs} = ${expandedLHS}`, `${lhs} = ${finalLHS}`, `${lhs} = ${k}(x) + ${c}x`, seed), explanation: T(lang, "為了避免運算錯誤，第一步必須完整抄下等式左邊的原式，暫時不需要進行展開或計算。", "To avoid calculation errors, the first step must be to completely copy the original expression on the left side, without expanding or calculating yet.") },
+                                { prompt: T(lang, "【步驟二】現在，請將左方展開並合併同類項化簡：", "[Step 2] Now, expand and simplify the L.H.S. by combining like terms:"), correct: `${lhs} = ${expandedLHS} = ${finalLHS}`, options: makeDistractors(`${lhs} = ${expandedLHS} = ${finalLHS}`, `${lhs} = ${k}x - ${b} + ${c}x = ${k+c}x - ${b}`, `${lhs} = ${k}x + ${k*b} + ${c}x = ${k+c}x + ${k*b}`, `${lhs} = ${k}x - ${k*b} - ${c}x = ${k-c}x - ${k*b}`, seed+1), explanation: T(lang, `展開括號：${k}(x - ${b}) = ${k}x - ${k*b}。<br/>合併同類項：${k}x + ${c}x = ${k+c}x。<br/>所以左方化簡後為 ${finalLHS}。`, `Expand brackets: ${k}(x - ${b}) = ${k}x - ${k*b}.<br/>Combine like terms: ${k}x + ${c}x = ${k+c}x.<br/>So simplified L.H.S. is ${finalLHS}.`) },
+                                { prompt: T(lang, "【步驟三】比較左方與右方並作結論：", "[Step 3] Compare L.H.S. and R.H.S. and make a conclusion:"), correct: T(lang, "因為 左方 = 右方，所以該方程是恆等式", "Since L.H.S. = R.H.S., the equation is an identity"), options: [T(lang, "因為 左方 = 右方，所以該方程是恆等式", "Since L.H.S. = R.H.S., the equation is an identity"), T(lang, "因為 左方 ≠ 右方，所以該方程不是恆等式", "Since L.H.S. ≠ R.H.S., the equation is not an identity"), T(lang, "只有當 x = 0 時 左方 才等於 右方", "L.H.S. = R.H.S. only when x = 0"), T(lang, "無法判斷是否為恆等式", "Cannot determine if it is an identity")], explanation: T(lang, `因為經化簡後 左方 = ${finalLHS}，與 右方 完全一致，故對任意 x 值均成立，是恆等式。`, `After simplification, L.H.S. = ${finalLHS}, which is identical to R.H.S.. Thus it holds for any x, and is an identity.`) }
+                            ]
+                        };
+                    } else if (lesson.id === "L2_L3") {
+                        const A = getInt(seed,1, 2, 7);
+                        const p = getInt(seed,2, 1, 7);
+                        const isBNegative = prng(seed + 3) > 0.5;
+                        const B_abs = getInt(seed,4, 1, 9);
+                        const signB = isBNegative ? '-' : '+';
+                        const c = A;
+                        const d = isBNegative ? (A * p - B_abs) : (A * p + B_abs);
+                        
+                        const unexpandedLHS = `A(x + ${p}) ${signB} B`;
+                        const expandedLHS = `Ax + ${p}A ${signB} B`;
+                        const rhsStr = `${c}x ${d >= 0 ? '+' : '-'} ${Math.abs(d)}`;
+                        const lhsLabel = T(lang, "左方", "L.H.S.");
+                        const rhsLabel = T(lang, "右方", "R.H.S.");
+                        const tableHTML = `<div class="my-4 overflow-x-auto rounded-xl border border-slate-300 shadow-sm max-w-2xl"><table class="w-full text-center text-sm sm:text-base font-serif whitespace-nowrap"><thead class="bg-indigo-100 text-indigo-900"><tr><th class="p-3 border-b border-slate-300"></th><th class="p-3 border-b border-slate-300 border-l">${T(lang, "x 的係數", "Coefficient of x")}</th><th class="p-3 border-b border-slate-300 border-l">${T(lang, "常數項", "Constant term")}</th></tr></thead><tbody class="bg-white"><tr><td class="p-3 font-bold bg-slate-50">${lhsLabel}</td><td class="p-3 border-l border-slate-200 text-indigo-600 font-bold text-lg">A</td><td class="p-3 border-l border-slate-200 text-indigo-600 font-bold text-lg">${p}A ${signB} B</td></tr><tr class="border-t border-slate-200"><td class="p-3 font-bold bg-slate-50">${rhsLabel}</td><td class="p-3 border-l border-slate-200 text-emerald-600 font-bold text-lg">${c}</td><td class="p-3 border-l border-slate-200 text-emerald-600 font-bold text-lg">${d}</td></tr></tbody></table></div>`;
+
+                        const steps = [
+                            { prompt: T(lang, "【步驟一】請先抄寫等式的左方 (L.H.S.)：", "[Step 1] First, copy down the L.H.S. of the equation:"), correct: `${lhsLabel} = ${unexpandedLHS}`, options: makeDistractors(`${lhsLabel} = ${unexpandedLHS}`, `${lhsLabel} = Ax + ${p} ${signB} B`, `${lhsLabel} = ${expandedLHS}`, `${lhsLabel} = A(x) ${signB} B`, seed), explanation: T(lang, "直接抄下等式左邊的完整算式，先不要展開，這是建立恆等關係的首要基礎步驟。", "Directly copy the complete expression on the left side, do not expand it yet. This is the basic first step to establish the identity relationship.") },
+                            { prompt: T(lang, "【步驟二】現在，請將左方的括號展開：", "[Step 2] Now, expand the bracket on the L.H.S.:"), correct: `${lhsLabel} = ${expandedLHS}`, options: makeDistractors(`${lhsLabel} = ${expandedLHS}`, `${lhsLabel} = Ax ${signB} B`, `${lhsLabel} = A(x + ${p}) ${signB} B`, `${lhsLabel} = Ax + ${p} ${signB} B`, seed+1), explanation: T(lang, `將 A 乘入括號，得 Ax + ${p}A，再拼接後面的 ${signB} B。`, `Multiply A into the bracket to get Ax + ${p}A, then append ${signB} B.`) },
+                            { prompt: T(lang, "【步驟三】確認右方的展開式：", "[Step 3] Confirm the expanded form of the R.H.S.:"), correct: `${rhsLabel} = ${rhsStr}`, options: makeDistractors(`${rhsLabel} = ${rhsStr}`, `${rhsLabel} = ${c}x ${signB} B`, `${rhsLabel} = cx + ${d}`, `${rhsLabel} = ${rhsStr} ${signB} B`, seed+2), explanation: T(lang, `右方本身已經是展開狀態：${rhsStr}。`, `The R.H.S. is already expanded: ${rhsStr}.`) },
+                            { prompt: T(lang, `【步驟四】根據左右兩方展開結果比較同類項。我們將係數填入下表：${tableHTML}比較 x 的係數，A 的值是什麼？`, `[Step 4] Compare like terms based on expansions. We fill coefficients into the table:${tableHTML}Comparing the coefficient of x, what is the value of A?`), correct: `A = ${c}`, options: makeDistractors(`A = ${c}`, `A = ${c+2}`, `A = ${p}`, `A = 0`, seed+3), explanation: T(lang, `從表格的「x 的係數」直行可以清晰看到：左方是 A，右方是 ${c}。因為兩邊恆等，得出 A = ${c}。`, `From the 'Coefficient of x' column: L.H.S. is A, R.H.S. is ${c}. Since they are identical, A = ${c}.`) },
+                            { prompt: T(lang, `【步驟五】根據表格比較「常數項」，並直接代入已知的 A = ${c}，寫出初始方程：`, `[Step 5] Comparing the 'Constant term' from the table, and substituting A = ${c}, write the initial equation:`), correct: `${p}(${c}) ${signB} B = ${d}`, options: makeDistractors(`${p}(${c}) ${signB} B = ${d}`, `${c}(${p}) ${signB === '+' ? '-' : '+'} B = ${d}`, `${p}A ${signB} B = ${d}`, `${p}(${c}) ${signB} B = 0`, seed+4), explanation: T(lang, `從表格得知常數項 ${p}A ${signB} B = ${d}。直接代入 A = ${c}，可得 ${p}(${c}) ${signB} B = ${d}。`, `From the table, the constant term is ${p}A ${signB} B = ${d}. Substituting A = ${c}, we get ${p}(${c}) ${signB} B = ${d}.`) }
+                        ];
+
+                        if (!isBNegative) {
+                            steps.push({ prompt: T(lang, "【步驟六】化簡數字乘法，然後移項求出 B 的最終答案：", "[Step 6] Simplify the multiplication, then transpose terms to find B:"), correct: `B = ${d} - ${p*c} = ${B_abs}`, options: makeDistractors(`B = ${d} - ${p*c} = ${B_abs}`, `B = ${d} + ${p*c} = ${d + p*c}`, `B = ${p*c} - ${d} = ${p*c - d}`, `B = ${B_abs * -1}`, seed + 6), explanation: T(lang, `計算 ${p} × ${c} = ${p*c}。將 ${p*c} 移至右方變為減號，得到 B = ${d} - ${p*c} = ${B_abs}。`, `Calculate ${p} × ${c} = ${p*c}. Transpose ${p*c} to the R.H.S. with a minus sign, to get B = ${d} - ${p*c} = ${B_abs}.`) });
+                        } else {
+                            const rightSideVal = d - p * c;
+                            const fracHTML = `B = <span class="inline-block align-middle text-center mx-1 text-[0.85em] leading-tight"><span class="block border-b border-slate-400 px-1">${rightSideVal}</span><span class="block px-1">-1</span></span> = ${B_abs}`;
+                            steps.push({ prompt: T(lang, "【步驟六】化簡數字乘法，然後將數字移項至右方：", "[Step 6] Simplify the multiplication, then transpose the number to the R.H.S.:"), correct: `-B = ${rightSideVal}`, options: makeDistractors(`-B = ${rightSideVal}`, `-B = ${d + p*c}`, `B = ${rightSideVal}`, `B = ${d + p*c}`, seed + 6), explanation: T(lang, `先計算 ${p} × ${c} = ${p*c}，得 ${p*c} - B = ${d}。<br/>移項得 -B = ${d} - ${p*c}，即 -B = ${rightSideVal}。`, `First calculate ${p} × ${c} = ${p*c} to get ${p*c} - B = ${d}.<br/>Transpose to get -B = ${d} - ${p*c}, which is -B = ${rightSideVal}.`) });
+                            steps.push({ prompt: T(lang, "【步驟七】將未知數的負號移至右方 (等式兩邊同除以 -1)，得出 B 的最終答案：", "[Step 7] Move the negative sign to the R.H.S. (divide both sides by -1) to find the final answer for B:"), correct: fracHTML, options: [fracHTML, `B = ${rightSideVal}`, `B = <span class="inline-block align-middle text-center mx-1 text-[0.85em] leading-tight"><span class="block border-b border-slate-400 px-1">-1</span><span class="block px-1">${rightSideVal}</span></span>`, `B = ${rightSideVal} - 1 = ${rightSideVal - 1}`].sort(() => prng(seed + 7) - 0.5), explanation: T(lang, `要消除 -B 的負號，等式兩邊需同時除以 -1。因此 B = ${rightSideVal} / -1 = ${B_abs}。`, `To eliminate the negative sign of -B, divide both sides by -1. Therefore B = ${rightSideVal} / -1 = ${B_abs}.`) });
+                        }
+                        qData = { title: `${T(lang, '已知恆等式', 'Given the identity')} <span class="katex-mock">${unexpandedLHS} ≡ ${rhsStr}</span>${T(lang, '，求常數 A 及 B。', ', find the constants A and B.')}`, steps: steps };
+                    } else if (lesson.id === "L6_L1") {
+                        const pair = getChoice(seed, 1, COPRIME_PAIRS); const p = swap ? pair[0] : pair[1]; const q = swap ? pair[1] : pair[0];
+                        const hcfNum = getInt(seed, 2, 2, 8); const sign = getChoice(seed, 3, ['+', '-']);
+                        const hcf = `${hcfNum}x`; const term1 = `${hcfNum * p}x²`; const term2 = `${hcfNum * q}xy`; const rem1 = `${p}x`; const rem2 = `${q}y`;
+                        qData = {
+                            title: `${T(lang, '因式分解：', 'Factorize: ')}<span class="katex-mock">${term1} ${sign} ${term2}</span>`,
+                            steps: [
+                                { prompt: T(lang, `【步驟一】找出各項的最大公因式 (HCF)：`, `[Step 1] Find the Highest Common Factor (HCF):`), correct: hcf, options: makeDistractors(hcf, `${hcfNum}`, `x`, `${hcfNum*p}x`, seed), explanation: T(lang, `數值 ${hcfNum*p} 和 ${hcfNum*q} 的 HCF 為 ${hcfNum}；字母部分 x² 與 xy 的公因式為 x。`, `Observe numbers ${hcfNum*p} and ${hcfNum*q}, HCF is ${hcfNum}; for letters x² and xy, common factor is x.`) },
+                                { prompt: T(lang, "【步驟二】寫出因式分解答案：", "[Step 2] Write the factorized answer:"), correct: `${hcf}(${rem1} ${sign} ${rem2})`, options: makeDistractors(`${hcf}(${rem1} ${sign} ${rem2})`, `${hcf}(${rem1} ${sign === '+' ? '-' : '+'} ${rem2})`, `x(${hcfNum*p}x ${sign} ${hcfNum*q}y)`, `${hcfNum}x(${rem1}x ${sign} ${rem2}y)`, seed+1), explanation: T(lang, `提取 ${hcf} 後組合：${hcf}(${rem1} ${sign} ${rem2})。`, `After extracting ${hcf}, combine: ${hcf}(${rem1} ${sign} ${rem2}).`) }
+                            ]
+                        };
+                    } else if (lesson.id === "L5_DIFF_SQ" || lesson.id === "L4") {
+                        const isExpand = lesson.id === "L4";
+                        const a = getInt(seed,1, 1, 7); const b = getInt(seed,2, 2, 9);
+                        const aStr = a===1 ? 'x' : `${a}x`; const bStr = isExpand ? `${b}` : `${b}y`;
+                        const factForm = swap ? `(${aStr} - ${bStr})(${aStr} + ${bStr})` : `(${aStr} + ${bStr})(${aStr} - ${bStr})`;
+                        const expForm = `${a===1?'x²':`${a*a}x²`} - ${isExpand ? b*b : `${b*b}y²`}`;
+                        if (isExpand) {
+                            qData = {
+                                title: `${T(lang, '展開代數式：', 'Expand the algebraic expression: ')}<span class="katex-mock">${factForm}</span>`,
+                                steps: [
+                                    { prompt: T(lang, "【步驟一】運用平方差公式 (a+b)(a-b) = a² - b²，請選出正確的 ( )² - ( )² 中間式：", "[Step 1] Apply the difference of two squares formula (a+b)(a-b) = a² - b². Select the correct ( )² - ( )² intermediate expression:"), correct: `(${aStr})² - (${bStr})²`, options: makeDistractors(`(${aStr})² - (${bStr})²`, `(${aStr})² + (${bStr})²`, `${a*a}x² - ${bStr}²`, `(${aStr} - ${bStr})²`, seed), explanation: T(lang, `必須先寫出 intermediate ( )² - ( )² 步驟：A = ${aStr}，B = ${bStr}，故中間式為 (${aStr})² - (${bStr})²。`, `Must write the intermediate ( )² - ( )² step first: A = ${aStr}, B = ${bStr}, so the intermediate is (${aStr})² - (${bStr})².`) },
+                                    { prompt: T(lang, "【步驟二】計算二次方項，得出最終展開答案：", "[Step 2] Calculate the square terms to get the final expanded answer:"), correct: expForm, options: makeDistractors(expForm, `${a===1?'x²':`${a*a}x²`} + ${b*b}`, `${a}x² - ${b*b}`, `${a===1?'x²':`${a*a}x²`} - ${2*b}`, seed+1), explanation: T(lang, `(${aStr})² = ${a===1?'x²':`${a*a}x²`}，(${bStr})² = ${b*b}。最終答案為 ${expForm}。`, `(${aStr})² = ${a===1?'x²':`${a*a}x²`}, (${bStr})² = ${b*b}. Final answer is ${expForm}.`) }
+                                ]
+                            };
+                        } else {
+                            qData = {
+                                title: `${T(lang, '因式分解：', 'Factorize: ')}<span class="katex-mock">${expForm}</span>`,
+                                steps: [
+                                    { prompt: T(lang, "【步驟一】將兩項重寫為 ( )² - ( )² 的形式：", "[Step 1] Rewrite the two terms into the form of ( )² - ( )²:"), correct: `(${aStr})² - (${bStr})²`, options: makeDistractors(`(${aStr})² - (${bStr})²`, `(${a===1?'x²':`${a*a}x²`}) - (${b*b}y²)`, `(${aStr})² + (${bStr})²`, `(${aStr} - ${bStr})²`, seed), explanation: T(lang, `${a===1?'x²':`${a*a}x²`} = (${aStr})²，${b*b}y² = (${bStr})²。中間式寫作 (${aStr})² - (${bStr})²。`, `${a===1?'x²':`${a*a}x²`} = (${aStr})², ${b*b}y² = (${bStr})². The intermediate is written as (${aStr})² - (${bStr})².`) },
+                                    { prompt: T(lang, "【步驟二】套用平方差公式 a² - b² = (a + b)(a - b)：", "[Step 2] Apply the difference of two squares formula a² - b² = (a + b)(a - b):"), correct: factForm, options: makeDistractors(factForm, `(${aStr} - ${bStr})²`, `(${a===1?'x':`${a*a}x`} + ${b*b}y)(${a===1?'x':`${a*a}x`} - ${b*b}y)`, `(${aStr} + ${bStr})²`, seed+1), explanation: T(lang, `利用 (A+B)(A-B) 結構，答案為 ${factForm}。${hintMsg}`, `Using the (A+B)(A-B) structure, the answer is ${factForm}.${hintMsg}`) }
+                                ]
+                            };
+                        }
+                    } else {
+                        const c = getInt(seed,1, 2, 6); const m = getInt(seed,2, 2, 8);
+                        const corr = swap ? `${c}(x - ${m})(x + ${m})` : `${c}(x + ${m})(x - ${m})`;
+                        qData = {
+                            title: `${T(lang, '綜合題：因式分解', 'Comprehensive question: Factorize')} <span class="katex-mock">${c}x² - ${c*m*m}</span>`,
+                            steps: [
+                                { prompt: T(lang, "【步驟一】首先提取最大公因數 (HCF)：", "[Step 1] First, extract the Highest Common Factor (HCF):"), correct: `${c}(x² - ${m*m})`, options: makeDistractors(`${c}(x² - ${m*m})`, `${c}(x² - ${m*m/2})`, `x(${c}x - ${c*m*m})`, `${c}(x - ${m})(x + ${m})`, seed), explanation: T(lang, `兩項均有數字公因數 ${c}，先提取 ${c} 得 ${c}(x² - ${m*m})。`, `Both terms have common number factor ${c}, extract ${c} first to get ${c}(x² - ${m*m}).`) },
+                                { prompt: T(lang, `【步驟二】對括號內利用平方差 x² - ${m}² 徹底分解：`, `[Step 2] Use difference of two squares on x² - ${m}² inside the bracket to factorize completely:`), correct: corr, options: makeDistractors(corr, `${c}(x - ${m})²`, `(x + ${m})(${c}x - ${c*m})`, `${c}(x² - ${m*m})`, seed+1), explanation: T(lang, `括號內的 (x² - ${m*m}) = (x + ${m})(x - ${m})，故完整答案為 ${c}(x + ${m})(x - ${m})。${hintMsg}`, `The term inside (x² - ${m*m}) = (x + ${m})(x - ${m}), so the complete answer is ${c}(x + ${m})(x - ${m}).${hintMsg}`) }
+                            ]
+                        };
+                    }
+
+                    list.push({ id: qId++, lessonId: lesson.id, category: lesson.category, ...qData });
+                }
+            });
+            return list;
+        };
+
+        const ALL_QUESTIONS_ZH = generateQuestionBank('zh');
+        const ALL_QUESTIONS_EN = generateQuestionBank('en');
+
+        const ConceptVisualizer = ({ lessonId, lang }) => {
+            const [sliderValue, setSliderValue] = useState(0);
+            const [showConcept, setShowConcept] = useState(false);
+            const [useNumbers, setUseNumbers] = useState(false);
+
+            useEffect(() => { setSliderValue(0); setShowConcept(false); setUseNumbers(false); }, [lessonId]);
+
+            if (lessonId === "L1" || lessonId === "L2_L3") {
+                const isL1 = lessonId === "L1";
+                return (
+                    <div className="bg-white text-slate-800 p-6 rounded-2xl shadow-md border-2 border-indigo-100 mb-6 flex flex-col md:flex-row gap-6 relative overflow-hidden animate-fade-in">
+                        <div className="flex-[3]">
+                            <h4 className="text-lg font-bold text-indigo-700 mb-4 flex items-center gap-2"><IconLightbulb /> {T(lang, "概念示範 / Example", "Example Concept")}</h4>
+                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-inner flex flex-col justify-center min-h-[140px]">
+                                {isL1 ? (
+                                    <div className="text-center"><div className="text-sm text-slate-500 mb-2">{T(lang, "證明以下為恆等式：", "Prove this is an identity:")}</div><div className="text-2xl font-serif font-bold text-slate-800 tracking-wider">3(x - 2) + x <span className="text-indigo-500 mx-2">≡</span> 4x - 6</div></div>
+                                ) : (
+                                    <div className="text-center"><div className="text-sm text-slate-500 mb-2">{T(lang, "求未知常數 A 及 B：", "Find unknown constants A and B:")}</div><div className="text-2xl font-serif font-bold text-slate-800 tracking-wider">A(x + 2) + B <span className="text-indigo-500 mx-2">≡</span> 5x + 7</div></div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="hidden md:block w-px bg-indigo-100 self-stretch"></div>
+                        <div className="md:hidden h-px bg-indigo-100 w-full"></div>
+                        <div className="flex-[2]">
+                            <h4 className="text-lg font-bold text-emerald-700 mb-4">{T(lang, "解題關鍵步驟 / Key Steps", "Key Steps")}</h4>
+                            <ul className="space-y-4 font-bold text-[15px]">
+                                <li className="flex items-start gap-3"><span className="bg-emerald-100 text-emerald-700 w-6 h-6 flex items-center justify-center rounded-full text-sm shrink-0 shadow-sm">1</span><div><span className="text-slate-700">{T(lang, "抄寫 左方 (L.H.S.)", "Copy L.H.S.")}</span><div className="text-xs text-rose-500 font-normal mt-1 border-l-2 border-rose-200 pl-2">{T(lang, "⚠️ 必須先完整抄下原式，切勿直接展開，避免混亂！", "⚠️ Must fully copy the original expression first, do not expand directly!")}</div></div></li>
+                                <li className="flex items-center gap-3"><span className="bg-emerald-100 text-emerald-700 w-6 h-6 flex items-center justify-center rounded-full text-sm shrink-0 shadow-sm">2</span><span className="text-slate-700">{T(lang, "展開 左方 (Expand)", "Expand L.H.S.")}</span></li>
+                                <li className="flex items-center gap-3"><span className="bg-emerald-100 text-emerald-700 w-6 h-6 flex items-center justify-center rounded-full text-sm shrink-0 shadow-sm">3</span><span className="text-slate-700">{T(lang, "抄寫 右方 (R.H.S.)", "Copy R.H.S.")}</span></li>
+                                <li className="flex items-center gap-3"><span className="bg-emerald-100 text-emerald-700 w-6 h-6 flex items-center justify-center rounded-full text-sm shrink-0 shadow-sm">4</span><span className="text-indigo-700 bg-indigo-50 px-2 py-1 rounded">{T(lang, isL1 ? "比較 兩方是否相等" : "比較 同類項求未知數", isL1 ? "Compare both sides" : "Compare like terms")}</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (lessonId === "L4" || lessonId === "L5_DIFF_SQ") {
+                const p = sliderValue / 100;
+                const A = useNumbers ? 150 : 140; const B = useNumbers ? 120 : 50; const a_minus_b = A - B; 
+                const label_a = useNumbers ? "5" : "a"; const label_b = useNumbers ? "4" : "b"; const label_a_plus_b = useNumbers ? "5 + 4" : "a + b"; const label_a_minus_b = useNumbers ? "5 - 4" : "a - b";
+
+                return (
+                    <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-md mb-6 transition-all duration-300 relative">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                            <h4 className="text-lg font-bold text-amber-300">{T(lang, "2.2A 平方差：a² - b² ≡ (a + b)(a - b)", "2.2A Difference of Squares: a² - b² ≡ (a + b)(a - b)")}</h4>
+                            <button onClick={() => setShowConcept(!showConcept)} className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${showConcept ? 'bg-indigo-950 border border-indigo-700 hover:bg-indigo-800' : 'bg-indigo-600 hover:bg-indigo-500 shadow-md relative z-20'}`}>{showConcept ? T(lang, "收起概念圖", "Hide Concept Diagram") : T(lang, "💡 顯示概念圖", "💡 Show Concept Diagram")}</button>
+                        </div>
+                        {!showConcept && (
+                            <div className="bg-slate-800/80 p-5 rounded-xl border border-slate-600/50 flex flex-col items-center justify-center shadow-lg animate-fade-in relative z-10"><div className="text-2xl font-serif italic font-bold text-white drop-shadow-md">a² - b² ≡ (a + b)(a - b)</div></div>
+                        )}
+                        {showConcept && (
+                            <div className="animate-fade-in flex flex-col items-center w-full">
+                                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4 w-full">
+                                    <p className="text-slate-300 text-sm flex-1">{T(lang, "拖拉下方滑桿，觀察剩餘的面積如何旋轉並重組成一個全新的長方形。", "Drag the slider below to observe how the remaining area rotates and reassembles into a new rectangle.")}</p>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="bg-indigo-950 px-4 py-2 rounded-lg border border-indigo-700 text-center font-serif text-lg whitespace-nowrap min-w-[140px]">{p < 0.5 ? (<span><span className="text-amber-400 font-bold">{useNumbers ? "5² - 4²" : "a² - b²"}</span></span>) : (<span><span className="text-emerald-400 font-bold">{useNumbers ? "(5 + 4)(5 - 4)" : "(a + b)(a - b)"}</span></span>)}</div>
+                                        <label className="flex items-center gap-2 cursor-pointer bg-indigo-950 px-3 py-2.5 rounded-lg border border-indigo-700 hover:bg-indigo-800 transition shadow-sm relative z-30"><input type="checkbox" checked={useNumbers} onChange={(e) => setUseNumbers(e.target.checked)} className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 border-indigo-500 bg-indigo-900 cursor-pointer"/><span className="text-sm font-bold text-amber-400">{T(lang, "代入 a=5, b=4", "Sub a=5, b=4")}</span></label>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-800/80 p-6 rounded-xl flex flex-col items-center w-full max-w-lg relative border border-slate-700/50">
+                                    <div className="w-full max-w-[300px] h-[220px] relative flex items-center justify-center pointer-events-none mb-4">
+                                        <svg width="100%" height="100%" viewBox="-60 -60 360 270" style={{ overflow: 'visible' }}>
+                                            <g>
+                                                <rect x={a_minus_b} y={a_minus_b} width={B} height={B} fill="rgba(148, 163, 184, 0.1)" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5 5" opacity={1 - p} />
+                                                <g style={{ opacity: 1 - p }}><path d={`M -15,0 L -20,0 L -20,${A} L -15,${A}`} fill="none" stroke="#94a3b8" strokeWidth="2" /><text x="-35" y={A/2 + 5} fill="#94a3b8" textAnchor="middle" className="font-serif italic text-xl font-bold">{label_a}</text><path d={`M 0,-15 L 0,-20 L ${A},-20 L ${A},-15`} fill="none" stroke="#94a3b8" strokeWidth="2" /><text x={A/2} y="-30" fill="#94a3b8" textAnchor="middle" className="font-serif italic text-xl font-bold">{label_a}</text><text x={A - B/2} y={A + 20} fill="#94a3b8" textAnchor="middle" className="font-serif italic text-lg">{label_b}</text><text x={A + 15} y={A - B/2 + 5} fill="#94a3b8" textAnchor="middle" className="font-serif italic text-lg">{label_b}</text></g>
+                                                <rect x="0" y="0" width={A} height={a_minus_b} fill="#6366f1" stroke="#ffffff" strokeWidth="1.5" />
+                                                <g transform={`translate(${p * A}, ${a_minus_b}) rotate(${-90 * p})`}><rect x="0" y="0" width={a_minus_b} height={B} fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" /></g>
+                                                <g style={{ opacity: p }}><path d={`M 0,-15 L 0,-20 L ${A+B},-20 L ${A+B},-15`} fill="none" stroke="#10b981" strokeWidth="2.5" /><text x={(A+B)/2} y="-30" fill="#10b981" textAnchor="middle" className="font-serif italic text-xl font-bold">{label_a_plus_b}</text><path d={`M -15,0 L -20,0 L -20,${a_minus_b} L -15,${a_minus_b}`} fill="none" stroke="#10b981" strokeWidth="2.5" /><text x="-40" y={a_minus_b/2 + 5} fill="#10b981" textAnchor="middle" className="font-serif italic text-xl font-bold">{label_a_minus_b}</text></g>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <div className="w-full relative z-50 pointer-events-auto pt-4 pb-2 border-t border-slate-700/50 mt-2">
+                                        <div className="flex justify-between text-xs font-bold text-slate-400 mb-4 px-1"><span>{T(lang, `左：正方形 (${useNumbers ? "5² - 4²" : "a² - b²"})`, `Square (${useNumbers ? "5² - 4²" : "a² - b²"})`)}</span><span>{T(lang, `右：長方形 (${useNumbers ? "(5+4)(5-4)" : "(a+b)(a-b)"})`, `Rectangle (${useNumbers ? "(5+4)(5-4)" : "(a+b)(a-b)"})`)}</span></div>
+                                        <input type="range" min="0" max="100" value={sliderValue} onChange={(e) => setSliderValue(Number(e.target.value))} style={{ touchAction: 'none' }} />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            if (lessonId === "L5" || lessonId === "L6_PERF_SQ") {
+                return (
+                    <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-md mb-6 border border-slate-700 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500 rounded-full blur-3xl opacity-10"></div><div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-emerald-500 rounded-full blur-3xl opacity-10"></div>
+                        <div className="flex items-center gap-3 mb-6 relative z-10">
+                            <div className="p-2.5 bg-indigo-500/20 rounded-xl text-indigo-400 shadow-inner"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg></div>
+                            <h4 className="text-xl font-bold text-white tracking-wide">{T(lang, "必背三條基本恆等式", "Three Essential Identities")}</h4>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
+                            <div className="bg-slate-800/80 hover:bg-slate-800 transition duration-300 p-5 rounded-xl border border-slate-600/50 flex flex-col items-center justify-center group shadow-lg"><div className="text-xs text-slate-400 mb-3 tracking-widest uppercase group-hover:text-amber-300 transition-colors">{T(lang, "完全平方 (和)", "Perfect Square (Sum)")}</div><div className="text-xl font-serif italic font-bold text-white group-hover:text-amber-400 transition-colors drop-shadow-md">a² + 2ab + b² ≡ (a + b)²</div></div>
+                            <div className="bg-slate-800/80 hover:bg-slate-800 transition duration-300 p-5 rounded-xl border border-slate-600/50 flex flex-col items-center justify-center group shadow-lg"><div className="text-xs text-slate-400 mb-3 tracking-widest uppercase group-hover:text-indigo-300 transition-colors">{T(lang, "完全平方 (差)", "Perfect Square (Diff)")}</div><div className="text-xl font-serif italic font-bold text-white group-hover:text-indigo-400 transition-colors drop-shadow-md">a² - 2ab + b² ≡ (a - b)²</div></div>
+                            <div className="bg-slate-800/80 hover:bg-slate-800 transition duration-300 p-5 rounded-xl border border-slate-600/50 flex flex-col items-center justify-center group shadow-lg"><div className="text-xs text-slate-400 mb-3 tracking-widest uppercase group-hover:text-emerald-300 transition-colors">{T(lang, "平方差", "Diff of Squares")}</div><div className="text-xl font-serif italic font-bold text-white group-hover:text-emerald-400 transition-colors drop-shadow-md">a² - b² ≡ (a + b)(a - b)</div></div>
+                        </div>
+                    </div>
+                );
+            }
+            return null;
+        };
+
+        const StepByStepQuizEngine = ({ lessonId, lang }) => {
+            const [sessionQuestions, setSessionQuestions] = useState([]);
+            const [qIndex, setQIndex] = useState(0);
+            const [isBatchFinished, setIsBatchFinished] = useState(false);
+            const [stepStatus, setStepStatus] = useState([]);
+            const [currentActiveStep, setCurrentActiveStep] = useState(0);
+
+            const ALL_QUESTIONS_BANK = lang === 'zh' ? ALL_QUESTIONS_ZH : ALL_QUESTIONS_EN;
+
+            const loadNewBatch = () => {
+                const lessonPool = ALL_QUESTIONS_BANK.filter(q => q.lessonId === lessonId);
+                const shuffled = [...lessonPool].sort(() => Math.random() - 0.5).slice(0, 3);
+                setSessionQuestions(shuffled); setQIndex(0); setIsBatchFinished(false);
+            };
+
+            useEffect(() => {
+                if (sessionQuestions.length > 0) {
+                    const currentQ = sessionQuestions[qIndex];
+                    if (currentQ && currentQ.steps) {
+                        setStepStatus(currentQ.steps.map(() => ({ selectedOption: null, isCorrect: null, completed: false, retryCount: 0 })));
+                        setCurrentActiveStep(0);
+                    }
+                }
+            }, [sessionQuestions, qIndex]);
+
+            useEffect(() => { loadNewBatch(); }, [lessonId, lang]);
+
+            if (sessionQuestions.length === 0 || stepStatus.length === 0) return null;
+
+            const currentQ = sessionQuestions[qIndex];
+
+            const handleSelectOption = (stepIdx, opt) => {
+                const status = stepStatus[stepIdx];
+                if (status.completed) return;
+                const isCorrect = (opt === currentQ.steps[stepIdx].correct);
+                const newStatus = [...stepStatus];
+                if (isCorrect) { newStatus[stepIdx] = { ...status, selectedOption: opt, isCorrect: true, completed: true }; } 
+                else {
+                    if (status.retryCount === 0) { newStatus[stepIdx] = { ...status, selectedOption: opt, isCorrect: false, retryCount: 1 }; } 
+                    else { newStatus[stepIdx] = { ...status, selectedOption: opt, isCorrect: false, completed: true }; }
+                }
+                setStepStatus(newStatus);
+            };
+
+            const handleNextStep = () => { if (currentActiveStep < currentQ.steps.length - 1) setCurrentActiveStep(prev => prev + 1); };
+            const handleNextQuestion = () => { if (qIndex < sessionQuestions.length - 1) setQIndex(qIndex + 1); else setIsBatchFinished(true); };
+
+            if (isBatchFinished) {
+                return (
+                    <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden mt-6 p-8 text-center">
+                        <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">✓</div>
+                        <h3 className="text-2xl font-black text-slate-800 mb-2">{T(lang, "完成本次 3 條練習！", "Completed 3 Exercises!")}</h3>
+                        <p className="text-slate-600 mb-6">{T(lang, "你已順利完成本單元的隨機 3 條分步練習題。", "You have successfully completed 3 random step-by-step exercises for this lesson.")}</p>
+                        <button onClick={loadNewBatch} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition active:scale-95 inline-flex items-center gap-2 text-lg"><IconRefresh /> {T(lang, "再練習 3 條 (新題目)", "Practice 3 More (New)")}</button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden mt-6">
+                    <div className="bg-slate-900 text-white p-5 flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                            <span className="bg-indigo-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">{T(lang, `第 ${qIndex + 1} / 3 題`, `Question ${qIndex + 1} / 3`)}</span>
+                            <h3 className="text-xl font-bold mt-2" dangerouslySetInnerHTML={{ __html: currentQ.title }}></h3>
+                        </div>
+                    </div>
+                    {(currentQ.category.includes("因式分解") || currentQ.category.includes("Factorization") || currentQ.category.includes("綜合進階") || currentQ.category.includes("Adv.")) && (
+                        <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-3 flex items-start gap-2 text-indigo-700 text-sm font-bold shadow-inner"><div className="flex-shrink-0 mt-0.5"><IconLightbulb /></div><span>{T(lang, "溫馨提示：因式分解結果中，括號的排列次序並不影響答案。例如 (x+2)(x+1) 與 (x+1)(x+2) 是完全一樣的！", "Tip: In factorization, the order of bracketed factors does not affect the answer. For example, (x+2)(x+1) is exactly the same as (x+1)(x+2)!")}</span></div>
+                    )}
+                    <div className="p-6 space-y-8">
+                        {currentQ.steps.map((stepData, sIdx) => {
+                            const status = stepStatus[sIdx]; if (!status) return null;
+                            const isVisible = sIdx <= currentActiveStep; if (!isVisible) return null;
+                            const isCurrent = sIdx === currentActiveStep; const isCompleted = status.completed; const isLastStep = sIdx === currentQ.steps.length - 1;
+
+                            return (
+                                <div key={sIdx} className={`p-5 rounded-xl border-2 transition-all duration-300 ${isCurrent ? 'border-indigo-500 bg-indigo-50/30 ring-2 ring-indigo-200 shadow-md' : 'border-slate-200 bg-slate-50 opacity-80'}`}>
+                                    <div className="flex items-start justify-between mb-3 w-full">
+                                        <div className={`font-bold text-lg flex items-start gap-2 flex-1 ${isCurrent ? 'text-indigo-900' : 'text-slate-700'}`}>
+                                            <span className={`w-7 h-7 mt-0.5 rounded-full text-white text-sm flex items-center justify-center font-bold flex-shrink-0 ${isCurrent ? 'bg-indigo-600' : 'bg-slate-400'}`}>{sIdx + 1}</span>
+                                            <div className="flex-1" dangerouslySetInnerHTML={{ __html: stepData.prompt }}></div>
+                                        </div>
+                                        {isCompleted && (
+                                            <div className="flex-shrink-0 ml-4 hidden sm:block">{status.isCorrect ? <span className="text-emerald-600 font-bold flex items-center gap-1"><IconCheck /> {T(lang, "步驟正確", "Correct Step")}</span> : <span className="text-rose-600 font-bold flex items-center gap-1"><IconCross /> {T(lang, "已查看解答", "Viewed Answer")}</span>}</div>
+                                        )}
+                                    </div>
+                                    {isCompleted && (
+                                        <div className="mb-4 sm:hidden flex-shrink-0">{status.isCorrect ? <span className="text-emerald-600 font-bold flex items-center gap-1"><IconCheck /> {T(lang, "步驟正確", "Correct Step")}</span> : <span className="text-rose-600 font-bold flex items-center gap-1"><IconCross /> {T(lang, "已查看解答", "Viewed Answer")}</span>}</div>
+                                    )}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                                        {stepData.options.map((opt, optIdx) => {
+                                            let btnStyle = "border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/50 text-slate-700";
+                                            if (status.selectedOption === opt) {
+                                                if (opt === stepData.correct) { btnStyle = "border-emerald-500 bg-emerald-50 text-emerald-900 font-bold ring-2 ring-emerald-300"; } 
+                                                else { btnStyle = "border-rose-500 bg-rose-50 text-rose-900 font-bold"; }
+                                            } else if (isCompleted && opt === stepData.correct) { btnStyle = "border-emerald-500 bg-emerald-50 text-emerald-800 font-bold"; } 
+                                            else if (!isCurrent) { btnStyle = "border-slate-100 bg-white text-slate-400"; }
+
+                                            return (
+                                                <button key={optIdx} onClick={() => handleSelectOption(sIdx, opt)} disabled={!isCurrent || isCompleted} className={`p-4 rounded-xl border text-left font-serif text-xl font-bold tracking-wide transition-all flex justify-between items-center gap-3 ${btnStyle} ${(!isCurrent || isCompleted) ? 'cursor-default' : ''}`}>
+                                                    <span className="flex-1 break-words" dangerouslySetInnerHTML={{ __html: opt }}></span>
+                                                    {status.selectedOption === opt && opt === stepData.correct && <IconCheck />}
+                                                    {status.selectedOption === opt && opt !== stepData.correct && <IconCross />}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {status.isCorrect === false && !isCompleted && (
+                                        <div className="mt-4 p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-center justify-between text-amber-900 animate-pulse-subtle">
+                                            <div className="flex items-center gap-2"><IconLightbulb /><span>{T(lang, "答錯了！你有 1 次補救機會。 請仔細檢查後再試一次！", "Incorrect! You have 1 chance left. Please double-check and try again!")}</span></div>
+                                            <button onClick={() => { const newStatus = [...stepStatus]; newStatus[sIdx].selectedOption = null; setStepStatus(newStatus); }} className="px-3 py-1 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700 transition">{T(lang, "再試一次", "Try Again")}</button>
+                                        </div>
+                                    )}
+                                    {isCompleted && (
+                                        <div className={`mt-4 p-4 border rounded-xl text-sm ${isLastStep ? 'bg-blue-50/90 border-blue-200 text-blue-950' : 'bg-emerald-50/80 border-emerald-200 text-emerald-950'}`}>
+                                            <p className={`font-bold mb-1 flex items-center gap-1 ${isLastStep ? 'text-blue-900' : 'text-emerald-800'}`}><IconLightbulb /> {isLastStep ? T(lang, "最終解答及說明：", "Final Answer & Explanation:") : T(lang, `步驟 ${sIdx + 1} 解說：`, `Step ${sIdx + 1} Explanation:`)}</p>
+                                            <div className="font-sans leading-relaxed" dangerouslySetInnerHTML={{ __html: stepData.explanation }}></div>
+                                            {isCurrent && !isLastStep && (<button onClick={handleNextStep} className="mt-4 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 transition flex items-center gap-2 w-full sm:w-auto justify-center">{T(lang, `進入【步驟 ${sIdx + 2}】`, `Proceed to [Step ${sIdx + 2}]`)} &rarr;</button>)}
+                                            {isCurrent && isLastStep && (
+                                                <div className="mt-5 pt-4 border-t border-blue-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+                                                    <span className="text-emerald-700 font-bold flex items-center gap-1">🎉 {T(lang, "本題訓練完成！已記錄學習歷程。", "Question training completed! Progress recorded.")}</span>
+                                                    <button onClick={handleNextQuestion} className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition active:scale-95 flex items-center gap-2 w-full sm:w-auto justify-center">{qIndex < 2 ? T(lang, "選下一條練習題 →", "Next Question →") : T(lang, "查看練習總結 →", "View Summary →")}</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [lang, setLang] = useState('zh');
+            const [activeLessonId, setActiveLessonId] = useState("LO");
+            const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+            const syllabus = getLessonSyllabus(lang);
+            const activeLesson = syllabus.find(l => l.id === activeLessonId) || syllabus[0];
+
+            // 處理選擇課題，並自動關閉側邊欄
+            const handleSelectLesson = (id) => {
+                setActiveLessonId(id);
+                setIsSidebarOpen(false);
+            };
+
+            return (
+                <div className="min-h-screen flex bg-slate-100 overflow-x-hidden relative">
+                    
+                    {/* 左上角懸浮選單按鈕 (當側邊欄關閉時顯示) */}
+                    {!isSidebarOpen && (
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="fixed top-4 left-4 z-40 bg-white border border-slate-200 text-indigo-700 p-3.5 rounded-xl shadow-lg hover:bg-indigo-50 hover:border-indigo-300 transition-all flex items-center justify-center gap-2 group animate-fade-in focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                        >
+                            <IconMenu />
+                            <span className="font-bold text-sm hidden sm:inline-block group-hover:text-indigo-800">
+                                {T(lang, "開啟課題清單", "Open Lesson List")}
+                            </span>
+                        </button>
+                    )}
+
+                    {/* 行動裝置版暗色遮罩 (當側邊欄開啟時) */}
+                    {isSidebarOpen && (
+                        <div
+                            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity"
+                            onClick={() => setIsSidebarOpen(false)}
+                        />
+                    )}
+
+                    {/* 側邊欄 (設定為 fixed 固定定位，透過 transform 滑動) */}
+                    <aside className={`fixed inset-y-0 left-0 z-50 w-80 bg-slate-900 text-slate-100 flex flex-col shadow-2xl transition-transform duration-300 ease-out transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-6 bg-slate-950 border-b border-slate-800 flex justify-between items-start">
+                            <div>
+                                <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">{T(lang, "F.2 中二數學 Ch.2", "F.2 Math Ch.2")}</span>
+                                <h1 className="text-xl font-black mt-1 text-white">{T(lang, "恆等式與因式分解", "Identities & Factorization")}<br/><span className="text-amber-400 text-sm font-normal">{T(lang, "教學流程分步訓練平台", "Step-by-Step Training Platform")}</span></h1>
+                            </div>
+                            <button onClick={() => setIsSidebarOpen(false)} className="text-slate-400 hover:text-white p-2 -mr-2 rounded-full hover:bg-slate-800 transition-colors focus:outline-none">
+                                <IconCross />
+                            </button>
+                        </div>
+
+                        <div className="p-3 bg-slate-900 border-b border-slate-700 flex justify-center gap-2">
+                            <button onClick={() => setLang('zh')} className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-colors ${lang === 'zh' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>中文</button>
+                            <button onClick={() => setLang('en')} className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-colors ${lang === 'en' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>English</button>
+                        </div>
+
+                        <nav className="flex-1 overflow-y-auto p-3 space-y-1 hide-scrollbar">
+                            <div className="text-xs font-bold text-slate-500 px-3 pt-2 pb-1 uppercase">{T(lang, "課堂教學選單 (共14個課堂)", "Lesson Menu (14 Lessons)")}</div>
+                            {syllabus.map((lesson) => {
+                                const isActive = lesson.id === activeLessonId;
+                                return (
+                                    <button
+                                        key={lesson.id}
+                                        onClick={() => handleSelectLesson(lesson.id)}
+                                        className={`w-full text-left p-3 rounded-xl transition flex flex-col ${isActive ? 'bg-indigo-600 text-white font-bold shadow-lg ring-1 ring-indigo-400' : 'hover:bg-slate-800 text-slate-300'}`}
+                                    >
+                                        <span className="text-sm">{lesson.title}</span>
+                                        <span className={`text-xs mt-0.5 ${isActive ? 'text-indigo-200' : 'text-slate-500'}`}>{lesson.category}</span>
+                                    </button>
+                                );
+                            })}
+                        </nav>
+
+                        <div className="p-4 bg-slate-950 border-t border-slate-800 text-xs text-slate-400 text-center whitespace-pre-line">
+                            {T(lang, "依據中二數學教學流程編排\n精選 Step-by-Step 引導練習", "Aligned with F.2 Math Curriculum\nCurated Step-by-Step Exercises")}
+                        </div>
+                    </aside>
+
+                    {/* 主要內容區域 (當側邊欄開啟時，在桌面版向右推擠；加上 padding-top 避免內容被懸浮按鈕擋住) */}
+                    <main className={`flex-1 min-h-screen overflow-y-auto transition-all duration-300 ease-out w-full ${isSidebarOpen ? 'md:ml-80' : 'ml-0'}`}>
+                        <div className={`p-4 md:p-8 max-w-5xl mx-auto w-full transition-all duration-300 ${!isSidebarOpen ? 'pt-24 md:pt-10' : 'pt-4 md:pt-8'}`}>
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full">{activeLesson.category}</span>
+                                    <span className="text-xs text-slate-400">{T(lang, "當前學習課堂", "Current Lesson")}</span>
+                                </div>
+                                <h2 className="text-2xl font-black text-slate-800">{activeLesson.title}</h2>
+                                <p className="text-slate-600 mt-2 leading-relaxed">{activeLesson.desc}</p>
+                            </div>
+
+                            <ConceptVisualizer lessonId={activeLessonId} lang={lang} />
+                            <StepByStepQuizEngine lessonId={activeLessonId} lang={lang} />
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
