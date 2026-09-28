@@ -184,6 +184,45 @@
                             steps.push({ prompt: T(lang, "【步驟七】將未知數的負號移至右方 (等式兩邊同除以 -1)，得出 B 的最終答案：", "[Step 7] Move the negative sign to the R.H.S. (divide both sides by -1) to find the final answer for B:"), correct: fracHTML, options: [fracHTML, `B = ${rightSideVal}`, `B = <span class="inline-block align-middle text-center mx-1 text-[0.85em] leading-tight"><span class="block border-b border-slate-400 px-1">-1</span><span class="block px-1">${rightSideVal}</span></span>`, `B = ${rightSideVal} - 1 = ${rightSideVal - 1}`].sort(() => prng(seed + 7) - 0.5), explanation: T(lang, `要消除 -B 的負號，等式兩邊需同時除以 -1。因此 B = ${rightSideVal} / -1 = ${B_abs}。`, `To eliminate the negative sign of -B, divide both sides by -1. Therefore B = ${rightSideVal} / -1 = ${B_abs}.`) });
                         }
                         qData = { title: `${T(lang, '已知恆等式', 'Given the identity')} <span class="katex-mock">${unexpandedLHS} ≡ ${rhsStr}</span>${T(lang, '，求常數 A 及 B。', ', find the constants A and B.')}`, steps: steps };
+                    } else if (lesson.id === "L5") {
+                        const a = getInt(seed, 1, 1, 5);
+                        const b = getInt(seed, 2, 1, 9);
+                        const sign = getChoice(seed, 3, ['+', '-']);
+                        const aStr = a === 1 ? 'x' : `${a}x`;
+                        const signOp = sign === '+' ? '+' : '-';
+                        const origStr = `(${aStr} ${signOp} ${b})²`;
+                        const step1Corr = `(${aStr})² ${signOp} 2(${aStr})(${b}) + (${b})²`;
+                        const finalAns = `${a*a===1?'x²':`${a*a}x²`} ${signOp} ${2*a*b}x + ${b*b}`;
+
+                        qData = {
+                            title: `${T(lang, '展開代數式：', 'Expand the algebraic expression: ')}<span class="katex-mock">${origStr}</span>`,
+                            steps: [
+                                {
+                                    prompt: T(lang, "【步驟一】運用完全平方公式 (a ± b)² = a² ± 2ab + b²，請選出正確的中間式：", "[Step 1] Apply the perfect square formula (a ± b)² = a² ± 2ab + b². Select the correct intermediate expression:"),
+                                    correct: step1Corr,
+                                    options: makeDistractors(
+                                        step1Corr,
+                                        `(${aStr})² ${signOp === '+' ? '-' : '+'} 2(${aStr})(${b}) + (${b})²`,
+                                        `(${aStr})² + (${b})²`,
+                                        `(${aStr})² ${signOp} 2(${aStr})(${b}) - (${b})²`,
+                                        seed
+                                    ),
+                                    explanation: T(lang, `運用完全平方公式 (a ± b)² = a² ± 2ab + b²，其中首項為 ${aStr}，尾項為 ${b}。中間式寫作 ${step1Corr}。`, `Applying formula (a ± b)² = a² ± 2ab + b², where first term is ${aStr} and last term is ${b}. The intermediate step is written as ${step1Corr}.`)
+                                },
+                                {
+                                    prompt: T(lang, "【步驟二】計算各項，得出最終展開答案：", "[Step 2] Simplify terms to get the final expanded answer:"),
+                                    correct: finalAns,
+                                    options: makeDistractors(
+                                        finalAns,
+                                        `${a*a===1?'x²':`${a*a}x²`} + ${b*b}`,
+                                        `${a===1?'x²':`${a}x²`} ${signOp} ${a*b}x + ${b*b}`,
+                                        `${a*a===1?'x²':`${a*a}x²`} ${signOp === '+' ? '-' : '+'} ${2*a*b}x + ${b*b}`,
+                                        seed + 1
+                                    ),
+                                    explanation: T(lang, `首項平方 (${aStr})² = ${a*a===1?'x²':`${a*a}x²`}，中間項 ${signOp}2(${aStr})(${b}) = ${signOp} ${2*a*b}x，尾項平方 (${b})² = ${b*b}。最終答案為 ${finalAns}。`, `First term squared (${aStr})² = ${a*a===1?'x²':`${a*a}x²`}, middle term ${signOp}2(${aStr})(${b}) = ${signOp} ${2*a*b}x, last term squared (${b})² = ${b*b}. Final answer is ${finalAns}.`)
+                                }
+                            ]
+                        };
                     } else if (lesson.id === "L6_L1") {
                         const pair = getChoice(seed, 1, COPRIME_PAIRS); const p = swap ? pair[0] : pair[1]; const q = swap ? pair[1] : pair[0];
                         const hcfNum = getInt(seed, 2, 2, 8); const sign = getChoice(seed, 3, ['+', '-']);
